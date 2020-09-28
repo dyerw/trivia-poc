@@ -3,6 +3,15 @@ import actionCreatorFactory, { isType } from "typescript-fsa";
 
 const actionCreator = actionCreatorFactory();
 
+export type Question = {
+  text: string;
+  a: string;
+  b: string;
+  c: string;
+  d: string;
+  answer: "a" | "b" | "c" | "d";
+};
+
 export const registerUser = actionCreator<User>("REGISTER_USER");
 export type RegisterUserAction = ReturnType<typeof registerUser>;
 
@@ -18,6 +27,14 @@ export type CreateGameAction = ReturnType<typeof createGame>;
 export const loadGame = actionCreator<{ game: { users: User[] } }>("LOAD_GAME");
 export type LoadGameAction = ReturnType<typeof loadGame>;
 
+export const startGame = actionCreator<{ gameId: string }>("START_GAME");
+export type StartGameAction = ReturnType<typeof startGame>;
+
+export const askQuestion = actionCreator<{ question: Question }>(
+  "ASK_QUESTION"
+);
+export type AskQuestionAction = ReturnType<typeof askQuestion>;
+
 export type SubscribeAction = { type: "logux/subscribe"; channel: string };
 export const subscribe = (channel: string): SubscribeAction => ({
   type: "logux/subscribe",
@@ -29,19 +46,25 @@ type Actions =
   | SubscribeAction
   | JoinGameAction
   | SetLocalUserAction
+  | StartGameAction
   | CreateGameAction;
 
 export type User = { name: string };
+
 export type State = {
   gameId: string | null;
+  inGame: boolean;
   users: User[];
   localUser: User | null;
+  currentQuestion: Question | null;
 };
 
 const initialState = {
   gameId: null,
   users: [],
   localUser: null,
+  inGame: false,
+  currentQuestion: null,
 };
 
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -80,6 +103,18 @@ const reducer: Reducer<State, Actions> = (state = initialState, action) => {
     return {
       ...state,
       users: action.payload.game.users,
+    };
+  }
+  if (isType(action, startGame)) {
+    return {
+      ...state,
+      inGame: true,
+    };
+  }
+  if (isType(action, askQuestion)) {
+    return {
+      ...state,
+      currentQuestion: action.payload.question,
     };
   }
   return state;
